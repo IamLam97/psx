@@ -133,13 +133,13 @@ const VariableMixin = superclass => class extends superclass {
         // unlike the View classes, we don't allow number coercion. we
         // explicitly allow floats unlike Int
         if (typeof value !== 'number') {
-            throw TypeError('giá trị không phải là số');
+            throw TypeError('value not a number');
         }
         super([value]);
     }
 
     addr_at(...args) {
-        throw TypeError('phương pháp chưa thực hiện');
+        throw TypeError('unimplemented method');
     }
 
     [Symbol.toPrimitive](hint) {

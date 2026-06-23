@@ -125,7 +125,7 @@ export function write32(u8_view, offset, value) {
 
 export function write64(u8_view, offset, value) {
     if (!(value instanceof Int)) {
-        throw TypeError('giá trị write64 phải là Int');
+        throw TypeError('write64 value must be an Int');
     }
 
     let low = value.lo;

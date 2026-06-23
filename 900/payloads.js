@@ -1,6 +1,6 @@
 //------BIG THANKS TO SISTRO FOR THIS !!!!!--------
 
-var LoadedMSG = "Đã tải trọng tải!";
+var LoadedMSG = "Payload Loaded!";
 
 var getPayload = function(payload, onLoadEndCallback) {
   var req = new XMLHttpRequest();
@@ -36,7 +36,7 @@ function Loadpayloadlocal(PLfile){ //Loading Payload via Payload Param.
     }
 		req.send();
 		req.onerror = function(){
-			console.log("Máy chủ BinLoader không chạy, đang thử tải tải trọng trực tuyến...");
+			console.log("BinLoader Server is not running, trying online payload loading...");
             Loadpayloadonline(PLfile);
 			return;
 		};
@@ -48,9 +48,9 @@ function Loadpayloadlocal(PLfile){ //Loading Payload via Payload Param.
 				    //Sending bins via IP POST Method
                     sendPayload(`http://${PS4IP}:9090`, req.response, function (req) {
                         if (req.status === 200) {
-                            //alert("Đã gửi tải trọng!");
+                            //alert("Payload sent !");
                         }else{
-                            console.log('Tải trọng chưa được gửi, đang thử tải tải trọng trực tuyến...');
+                            console.log('Payload not sent, trying online payload loading...');
                             setTimeout(() => {
                                 Loadpayloadonline(PLfile);
                             }, 3000); // 3 seconds delay
@@ -60,7 +60,7 @@ function Loadpayloadlocal(PLfile){ //Loading Payload via Payload Param.
                 }
 			});
 			} else {
-				alert("Không thể tải trọng tải vì máy chủ BinLoader đang bận");//<<If server is busy, alert message.
+				alert("Cannot Load Payload Because The BinLoader Server Is Busy");//<<If server is busy, alert message.
 				return;
 		  }
 	  };
@@ -78,14 +78,14 @@ function Loadpayloadonline(PLfile) {
     if (typeof window.toogle_payload === 'function') {
         window.toogle_payload(PLfile);
     } else {
-        console.log('Tải trọng được đặt để tải sau khi khai thác: ' + PLfile);
+        console.log('Payload set for loading after exploit: ' + PLfile);
     }
 }
 
 // PSFree Fix
 
 function load_PSFreeFix(){
-    const Confirmation = confirm("Bạn có chắc chắn muốn tải tải trọng PSFree Fix không?");
+    const Confirmation = confirm("Are you sure you want to load the PSFree Fix payload?");
     if (Confirmation) {
         // First try local loading through GoldHen
         Loadpayloadlocal("./payloads/ps4-psfree-fix.bin");
@@ -93,151 +93,151 @@ function load_PSFreeFix(){
         // Also show loading message
         if (document.getElementById('log')) {
             awaitpl();
-            LoadedMSG = "Đã tải bản sửa lỗi miễn phí của PSFree!";
+            LoadedMSG = "PSFree Fix Payload Loaded!";
         }
     }
 }
 
 // App2USB - Transfer Apps to USB
 function load_app2usb(){
-    const Confirmation = confirm("Tải trọng tải App2USB? Điều này cho phép chuyển ứng dụng sang bộ lưu trữ USB.");
+    const Confirmation = confirm("Load App2USB payload? This allows transferring applications to USB storage.");
     if (Confirmation) {
         Loadpayloadlocal("./payloads/app2usb.bin");
         if (document.getElementById('log')) {
             awaitpl();
-            LoadedMSG = "Đã tải tải trọng App2USB!";
+            LoadedMSG = "App2USB Payload Loaded!";
         }
     }
 }
 
 // AppCache Install
 function load_appcache_install(){
-    const Confirmation = confirm("Tải trọng tải cài đặt AppCache?");
+    const Confirmation = confirm("Load AppCache Install payload?");
     if (Confirmation) {
         Loadpayloadlocal("./payloads/appcache-install.bin");
         if (document.getElementById('log')) {
             awaitpl();
-            LoadedMSG = "Đã tải trọng tải cài đặt AppCache!";
+            LoadedMSG = "AppCache Install Payload Loaded!";
         }
     }
 }
 
 // Backup
 function load_backup(){
-    const Confirmation = confirm("Tải trọng tải dự phòng? Điều này sẽ sao lưu dữ liệu hệ thống của bạn.");
+    const Confirmation = confirm("Load Backup payload? This will backup your system data.");
     if (Confirmation) {
         Loadpayloadlocal("./payloads/backup.bin");
         if (document.getElementById('log')) {
             awaitpl();
-            LoadedMSG = "Đã tải trọng tải dự phòng!";
+            LoadedMSG = "Backup Payload Loaded!";
         }
     }
 }
 
 // Disable Updates
 function load_disable_updates(){
-    const Confirmation = confirm("Tải Tắt tải trọng Cập nhật? Điều này sẽ chặn cập nhật hệ thống.");
+    const Confirmation = confirm("Load Disable Updates payload? This will block system updates.");
     if (Confirmation) {
         Loadpayloadlocal("./payloads/disable-updates.bin");
         if (document.getElementById('log')) {
             awaitpl();
-            LoadedMSG = "Vô hiệu hóa cập nhật Tải trọng đã tải!";
+            LoadedMSG = "Disable Updates Payload Loaded!";
         }
     }
 }
 
 // Enable Updates
 function load_enable_updates(){
-    const Confirmation = confirm("Tải Kích hoạt tải trọng cập nhật? Điều này sẽ cho phép cập nhật hệ thống.");
+    const Confirmation = confirm("Load Enable Updates payload? This will allow system updates.");
     if (Confirmation) {
         Loadpayloadlocal("./payloads/enable-updates.bin");
         if (document.getElementById('log')) {
             awaitpl();
-            LoadedMSG = "Kích hoạt tính năng cập nhật Tải trọng đã tải!";
+            LoadedMSG = "Enable Updates Payload Loaded!";
         }
     }
 }
 
 // FTP Server
 function load_ftp(){
-    const Confirmation = confirm("Tải tải trọng của Máy chủ FTP? Thao tác này sẽ khởi động máy chủ FTP trên PS4 của bạn.");
+    const Confirmation = confirm("Load FTP Server payload? This will start an FTP server on your PS4.");
     if (Confirmation) {
         Loadpayloadlocal("./payloads/ftp.bin");
         if (document.getElementById('log')) {
             awaitpl();
-            LoadedMSG = "Tải trọng máy chủ FTP đã được tải!";
+            LoadedMSG = "FTP Server Payload Loaded!";
         }
     }
 }
 
 // History Blocker
 function load_history_blocker(){
-    const Confirmation = confirm("Tải trọng tải của Trình chặn lịch sử? Điều này sẽ chặn theo dõi lịch sử trình duyệt.");
+    const Confirmation = confirm("Load History Blocker payload? This will block browser history tracking.");
     if (Confirmation) {
         Loadpayloadlocal("./payloads/history-blocker.bin");
         if (document.getElementById('log')) {
             awaitpl();
-            LoadedMSG = "Đã tải tải trọng của trình chặn lịch sử!";
+            LoadedMSG = "History Blocker Payload Loaded!";
         }
     }
 }
 
 // PS4 Debug
 function load_ps4debug(){
-    const Confirmation = confirm("Tải trọng tải PS4Debug? Điều này cho phép các tính năng gỡ lỗi.");
+    const Confirmation = confirm("Load PS4Debug payload? This enables debugging features.");
     if (Confirmation) {
         Loadpayloadlocal("./payloads/ps4debug.bin");
         if (document.getElementById('log')) {
             awaitpl();
-            LoadedMSG = "Đã tải tải trọng tải PS4Debug!";
+            LoadedMSG = "PS4Debug Payload Loaded!";
         }
     }
 }
 
 // PUP Decrypt
 function load_pup_decrypt(){
-    const Confirmation = confirm("Tải trọng tải Giải mã PUP? Điều này cho phép giải mã các tập tin cập nhật PS4.");
+    const Confirmation = confirm("Load PUP Decrypt payload? This allows decrypting PS4 update files.");
     if (Confirmation) {
         Loadpayloadlocal("./payloads/pup-decrypt.bin");
         if (document.getElementById('log')) {
             awaitpl();
-            LoadedMSG = "Tải trọng giải mã PUP đã được tải!";
+            LoadedMSG = "PUP Decrypt Payload Loaded!";
         }
     }
 }
 
 // Restore
 function load_restore(){
-    const Confirmation = confirm("Tải Khôi phục tải trọng? Điều này sẽ khôi phục dữ liệu hệ thống của bạn.");
+    const Confirmation = confirm("Load Restore payload? This will restore your system data.");
     if (Confirmation) {
         Loadpayloadlocal("./payloads/restore.bin");
         if (document.getElementById('log')) {
             awaitpl();
-            LoadedMSG = "Khôi phục tải trọng đã tải!";
+            LoadedMSG = "Restore Payload Loaded!";
         }
     }
 }
 
 // RIF Renamer
 function load_rif_renamer(){
-    const Confirmation = confirm("Tải trọng tải RIF Renamer? Công cụ này quản lý các tập tin giấy phép.");
+    const Confirmation = confirm("Load RIF Renamer payload? This tool manages license files.");
     if (Confirmation) {
         Loadpayloadlocal("./payloads/rif-renamer.bin");
         if (document.getElementById('log')) {
             awaitpl();
-            LoadedMSG = "Tải trọng của RIF Renamer đã được tải!";
+            LoadedMSG = "RIF Renamer Payload Loaded!";
         }
     }
 }
 
 // WebRTE
 function load_webrte(){
-    const Confirmation = confirm("Tải trọng tải WebRTE? Điều này cho phép các tính năng chỉnh sửa theo thời gian thực.");
+    const Confirmation = confirm("Load WebRTE payload? This enables real-time editing features.");
     if (Confirmation) {
         Loadpayloadlocal("./payloads/WebRTE_900.bin");
         if (document.getElementById('log')) {
             awaitpl();
-            LoadedMSG = "Đã tải tải trọng WebRTE!";
+            LoadedMSG = "WebRTE Payload Loaded!";
         }
     }
 }

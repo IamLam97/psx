@@ -205,7 +205,7 @@ export class Addr extends Int {
     // dst and src may overlap
     cpy(dst, src, len) {
         if (!(isInteger(len) && 0 <= len && len <= 0xffffffff)) {
-            throw TypeError('len không phải là số nguyên 32 bit không dấu');
+            throw TypeError('len not a unsigned 32-bit integer');
         }
 
         const dvals = lohi_from_one(dst);
@@ -229,16 +229,16 @@ export class Addr extends Int {
     // memory
     gc_alloc(size) {
         if (!isInteger(size)) {
-            throw TypeError('kích thước không phải là số nguyên');
+            throw TypeError('size not a integer');
         }
         if (size < 0) {
-            throw RangeError('kích thước là âm');
+            throw RangeError('size is negative');
         }
 
         const fastLimit = 1000;
         size = (size + 7 & ~7) >> 3;
         if (size > fastLimit) {
-            throw RangeError('kích thước quá lớn');
+            throw RangeError('size is too large');
         }
 
         const backer = new Float64Array(size);
@@ -263,7 +263,7 @@ export class Addr extends Int {
         if (object === null
             || (typeof object !== 'object' && typeof object !== 'function')
         ) {
-            throw TypeError('đối số không phải là đối tượng JS');
+            throw TypeError('argument not a JS object');
         }
 
         const obj = this._obj;
@@ -333,28 +333,28 @@ export class Addr extends Int {
 
     read8_at(offset) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         return this._worker.getUint8(offset);
     }
 
     read16_at(offset) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         return this._worker.getUint16(offset, true);
     }
 
     read32_at(offset) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         return this._worker.getUint32(offset, true);
     }
 
     read64_at(offset) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         const worker = this._worker;
         return new Int(
@@ -365,7 +365,7 @@ export class Addr extends Int {
 
     readp_at(offset) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         const worker = this._worker;
         return new Addr(
@@ -399,28 +399,28 @@ export class Addr extends Int {
 
     write8_at(offset, value) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         this._worker.setUint8(offset, value);
     }
 
     write16_at(offset, value) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         this._worker.setUint16(offset, value, true);
     }
 
     write32_at(offset, value) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         this._worker.setUint32(offset, value, true);
     }
 
     write64_at(offset, value) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         const values = lohi_from_one(value);
         const worker = this._worker;
@@ -466,7 +466,7 @@ export class Memory {
     // dst and src may overlap
     cpy(dst, src, len) {
         if (!(isInteger(len) && 0 <= len && len <= 0xffffffff)) {
-            throw TypeError('len không phải là số nguyên 32 bit không dấu');
+            throw TypeError('len not a unsigned 32-bit integer');
         }
 
         const dvals = lohi_from_one(dst);
@@ -490,16 +490,16 @@ export class Memory {
     // memory
     gc_alloc(size) {
         if (!isInteger(size)) {
-            throw TypeError('kích thước không phải là số nguyên');
+            throw TypeError('size not a integer');
         }
         if (size < 0) {
-            throw RangeError('kích thước là âm');
+            throw RangeError('size is negative');
         }
 
         const fastLimit = 1000;
         size = (size + 7 & ~7) >> 3;
         if (size > fastLimit) {
-            throw RangeError('kích thước quá lớn');
+            throw RangeError('size is too large');
         }
 
         const backer = new Float64Array(size);
@@ -524,7 +524,7 @@ export class Memory {
         if (object === null
             || (typeof object !== 'object' && typeof object !== 'function')
         ) {
-            throw TypeError('đối số không phải là đối tượng JS');
+            throw TypeError('argument not a JS object');
         }
 
         const obj = this._obj;
@@ -594,28 +594,28 @@ export class Memory {
 
     read8_at(offset) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         return this._worker.getUint8(offset);
     }
 
     read16_at(offset) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         return this._worker.getUint16(offset, true);
     }
 
     read32_at(offset) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         return this._worker.getUint32(offset, true);
     }
 
     read64_at(offset) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         const worker = this._worker;
         return new Int(
@@ -626,7 +626,7 @@ export class Memory {
 
     readp_at(offset) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         const worker = this._worker;
         return new Addr(
@@ -660,28 +660,28 @@ export class Memory {
 
     write8_at(offset, value) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         this._worker.setUint8(offset, value);
     }
 
     write16_at(offset, value) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         this._worker.setUint16(offset, value, true);
     }
 
     write32_at(offset, value) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         this._worker.setUint32(offset, value, true);
     }
 
     write64_at(offset, value) {
         if (!isInteger(offset)) {
-            throw TypeError('offset không phải là số nguyên');
+            throw TypeError('offset not a integer');
         }
         const values = lohi_from_one(value);
         const worker = this._worker;

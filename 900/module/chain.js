@@ -91,12 +91,12 @@ export const syscall_map = new Map(Object.entries({
 }));
 
 const argument_pops = [
-    'pop rdi; Phải',
-    'pop rsi; về lại',
-    'bật rdx; về lại',
-    'bật RCx; về lại',
-    'bật r8; Phải',
-    'bật r9; về lại',
+    'pop rdi; ret',
+    'pop rsi; ret',
+    'pop rdx; ret',
+    'pop rcx; ret',
+    'pop r8; ret',
+    'pop r9; ret',
 ];
 
 // implementations are expected to have these gadgets:
@@ -217,10 +217,10 @@ export class ChainBase {
 
     check_allow_run() {
         if (this.position === 0) {
-            throw Error('chuỗi trống');
+            throw Error('chain is empty');
         }
         if (this.is_dirty) {
-            throw Error('chuỗi đã chạy rồi, hãy làm sạch nó trước');
+            throw Error('chain already ran, clean it first');
         }
     }
 
@@ -301,8 +301,8 @@ export class ChainBase {
     push_call(func_addr, ...args) {
         if (args.length > 6) {
             throw TypeError(
-                'push_call() không hỗ trợ các hàm có nhiều hơn 6'
-                + ' lý lẽ');
+                'push_call() does not support functions that have more than 6'
+                + ' arguments');
         }
 
         for (let i = 0; i < args.length; i++) {
@@ -347,7 +347,7 @@ export class ChainBase {
     //
     // Args:
     //   gadgets:
-    //     A Map-like object mapping instruction strings (e.g. "pop rax; Phải")
+    //     A Map-like object mapping instruction strings (e.g. "pop rax; ret")
     //     to their addresses in memory.
     //   syscall_array:
     //     An array whose indices correspond to syscall numbers. Maps syscall
@@ -367,30 +367,30 @@ export class ChainBase {
     // running. Implementations can optionally check .is_dirty to enforce
     // single-run gadget sequences
     run() {
-        throw Error('không được thực hiện');
+        throw Error('not implemented');
     }
 
     // anything you need to do before the ROP chain jumps back to JavaScript
     push_end() {
-        throw Error('không được thực hiện');
+        throw Error('not implemented');
     }
 
     push_get_errno() {
-        throw Error('không được thực hiện');
+        throw Error('not implemented');
     }
 
     push_clear_errno() {
-        throw Error('không được thực hiện'); 
+        throw Error('not implemented'); 
     }
 
     // get the rax register
     push_get_retval() {
-        throw Error('không được thực hiện');
+        throw Error('not implemented');
     }
 
     // get the rax and rdx registers
     push_get_retval_all() {
-        throw Error('không được thực hiện');
+        throw Error('not implemented');
     }
 
     // END: implementation-dependent parts
@@ -406,7 +406,7 @@ export class ChainBase {
 
     do_call(...args) {
         if (this.position) {
-            throw Error('chuỗi không trống');
+            throw Error('chain not empty');
         }
         try {
             this.push_call(...args);
@@ -437,7 +437,7 @@ export class ChainBase {
 
     do_syscall(...args) {
         if (this.position) {
-            throw Error('chuỗi không trống');
+            throw Error('chain not empty');
         }
         try {
             this.push_syscall(...args);
@@ -476,7 +476,7 @@ export class ChainBase {
 
     do_syscall_clear_errno(...args) {
         if (this.position) {
-            throw Error('chuỗi không trống');
+            throw Error('chain not empty');
         }
         try {
             this.push_clear_errno();
@@ -542,15 +542,15 @@ export function get_gadget(map, insn_str) {
 
 function load_fw_specific(version) {
     if (version & 0x10000) {
-        throw RangeError('ps5 chưa được hỗ trợ');
+        throw RangeError('ps5 not supported yet');
     }
 
     const value = version & 0xffff;
-    // we don'Tôi không muốn bận tâm với các phần mềm quá cũ không hỗ trợ't support
+    // we don't want to bother with very old firmwares that don't support
     // ECMAScript 2015. 6.xx WebKit poisons the pointer fields of some types
     // which can be annoying to deal with
     if (value < 0x900) {
-        throw RangeError("Phần mềm PS4 < 9.00 không được hỗ trợ");
+        throw RangeError("PS4 firmwares < 9.00 isn't supported");
     }
 
     // 9.00, 9.03, 9.04
@@ -563,7 +563,7 @@ function load_fw_specific(version) {
       return import("../rop/950.js");
     }
 
-    throw RangeError('phần mềm không được hỗ trợ');
+    throw RangeError('firmware not supported');
 }
 
 export let gadgets = null;

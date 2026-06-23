@@ -118,7 +118,7 @@ function dump_libwebkit() {
 
     log(`vtable: ${addr}`);
     const vtable = make_buffer(addr, 0x400);
-    send(url, vtable, `vtable_${addr}.bin`, () => log('vtable đã gửi'));
+    send(url, vtable, `vtable_${addr}.bin`, () => log('vtable sent'));
 
     const [lib_base, lib_end] = get_boundaries(addr);
     dump('libSceNKWebKit', lib_base, lib_end);

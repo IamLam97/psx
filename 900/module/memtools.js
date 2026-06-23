@@ -46,12 +46,12 @@ export function make_buffer(addr, size) {
     // The FastTypedArray approach will have a small time frame where the GC
     // can inspect the invalid m_vector field.
     //
-    // Views created via "TypedArray mới (x)" where "x" is a number will always
+    // Views created via "new TypedArray(x)" where "x" is a number will always
     // have an m_mode < WastefulTypedArray.
     const u = new Uint8Array(1001);
     const u_addr = mem.addrof(u);
 
-    // we won't thay đổi con bướm và m_mode nên chúng ta đã thắng't save those
+    // we won't change the butterfly and m_mode so we won't save those
     const old_addr = u_addr.read64(off.view_m_vector);
     const old_size = u_addr.read32(off.view_m_length);
 
@@ -160,7 +160,7 @@ export function resolve_import(import_addr) {
     if (import_addr.read16(0) !== 0x25ff) {
         throw Error(
             `instruction at ${import_addr} is not of the form: jmp qword`
-            + ' [rách + X]');
+            + ' [rip + X]');
     }
     // module_function_import:
     //     jmp qword [rip + X]
@@ -214,7 +214,7 @@ export function init_syscall_array(
     }
     if (!found) {
         throw Error(
-            'Không tìm thấy chuỗi "rdlo" trong libkernel_web, địa chỉ cơ sở:'
+            '"rdlo" string not found in libkernel_web, base address:'
             + ` ${libkernel_web_base}`);
     }
 
